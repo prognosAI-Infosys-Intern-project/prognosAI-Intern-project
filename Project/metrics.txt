@@ -1,0 +1,3 @@
+Epoch 15: val_mae improved from 32.79634 to 30.22036, saving model to model/best_model.keras
+444/444 - 19s - 43ms/step - loss: 421.3098 - mae: 14.3275 - val_loss: 1907.6725 - val_mae: 30.2204 - learning_rate: 1.0000e-04
+Epoch 16/100
