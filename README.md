@@ -96,4 +96,54 @@ Tech Stack
 - **Evaluation:**  
 - Clarity and informativeness of visualizations.  
 - Responsiveness and usability of the dashboard.  
-  - Ability to convey critical insights about asset health and potential risks. 
+  - Ability to convey critical insights about asset health and potential risks.
+
+## 🚀 Quick Start: prognosAI Project
+
+Easily set up and test the project by following these steps:
+
+---
+
+> ### 🛠️ **Clone the repository**
+> ```
+> git clone git@github.com:prognosAI-Infosys-Intern-project/prognosAI-Intern-project.git
+> ```
+
+---
+
+> ### 📁 **Navigate to the project folder**
+> ```
+> cd prognosAI-Intern-project/Project
+> ```
+
+---
+
+> ### ✨ **Run Data Preprocessing**
+> Generate the necessary datasets:
+> ```
+> python data_preprocessing.py
+> ```
+
+---
+
+> ### 🖥️ **Start the Streamlit App**
+> Launch the web interface:
+> ```
+> streamlit run app.py
+> ```
+
+---
+
+> ### 📤 **Test Model Output**
+> Upload the `sequence` and `metadata` files from:
+> ```
+> processed_data/test
+> ```
+> View the results in the app interface.
+
+---
+
+**Badge Examples for README**  
+You can further include badges for status, license, and technologies (optional):
+
+
