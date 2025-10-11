@@ -1,29 +1,40 @@
-# PrognosAI:AI-Driven Predictive Maintenance System Using Time-Series Sensor Data  
+# 🔧 PrognosAI: AI-Driven Predictive Maintenance System Using Time-Series Sensor Data
 
-Project Objective  
+## 🎯 Project Objective
 
-To design and develop an AI-based predictive maintenance system capable of estimating the Remaining Useful Life (RUL) of industrial machinery using multivariate time-series sensor data. The system will be prototyped using the NASA CMAPSS dataset and structured to generalize across similar domains such as turbines, pumps, and motors. The objective is to enable timely maintenance decisions, minimize unplanned downtime, and optimize asset utilization by applying deep learning techniques like LSTM for sequential pattern recognition and failure prediction.  
+Design and develop an AI-based predictive maintenance system to estimate the Remaining Useful Life (RUL) of industrial machinery using multivariate time-series sensor data. This prototype uses the NASA CMAPSS dataset and is adaptable across domains like turbines, pumps, and motors. The goal is to enable timely maintenance decisions, minimize unplanned downtime, and optimize asset utilization with deep learning models such as LSTM for sequential pattern recognition and failure prediction.
 
-Project Workflow  
+---
+
+## 🗂️ Project Workflow
 
 1. **Data Ingestion**  
-- Load and preprocess the CMAPSS sensor dataset (cycle-wise engine data). 
+   - Load and preprocess the CMAPSS sensor dataset (cycle-wise engine data).
+
 2. **Feature Engineering**  
-- Create rolling window sequences and compute Remaining Useful Life (RUL) targets.  
+   - Create rolling window sequences and compute Remaining Useful Life (RUL) targets.
+
 3. **Model Training**  
-- Train a time-series model (e.g., LSTM or GRU) to predict RUL from sensor sequences.  
+   - Train a time-series model (e.g., LSTM or GRU) to predict RUL from sensor sequences.
+
 4. **Model Evaluation**  
-- Evaluate performance using RMSE and compare predicted RUL vs actual RUL. 
+   - Evaluate model performance using RMSE and compare predicted RUL vs actual RUL.
+
 5. **Risk Thresholding**  
-- Define thresholds to trigger maintenance alerts based on predicted RUL. 
+   - Define thresholds to trigger maintenance alerts based on predicted RUL.
+
 6. **Visualization & Output**  
-- Present results via charts and dashboards showing RUL trends and alert zones. 
+   - Present results through charts and dashboards showing RUL trends and alert zones.
 
-Architecture Diagram  
+---
 
-![](Aspose.Words.072c5ff2-ae53-4611-8571-688eb115c598.001.png)
+## 🏗️ Architecture Diagram
 
-Tech Stack  
+![Architecture Diagram](path_to_your_diagram.png)  
+
+---
+
+## 🛠️ Tech Stack
 
 - **Python** – Core programming language  
 - **Pandas, NumPy** – Data processing  
@@ -34,66 +45,119 @@ Tech Stack
 - **Docker** – Optional deployment  
 - **NASA CMAPSS Dataset** – Source data  
 
-**Milestone 1: Data Preparation & Feature Engineering**  
+---
 
-- **Objective:** Successfully load, preprocess, and prepare the CMAPSS dataset for model training, including the creation of appropriate features and RUL targets.  
+## 📅 Project Milestones
+
+### Milestone 1: Data Preparation & Feature Engineering  
+- **Objective:** Load, preprocess, and prepare the CMAPSS dataset with rolling sequences and RUL targets.  
 - **Deliverables:**  
-- Cleaned and preprocessed CMAPSS sensor data.  
-- Python scripts for data loading and preprocessing.  
-- Generated rolling window sequences.  
-- Computed RUL targets for all engine cycles.  
+  - Cleaned & preprocessed CMAPSS sensor data  
+  - Python scripts for loading and preprocessing  
+  - Rolling window sequences and RUL computations  
 - **Evaluation:**  
-- Verification of data integrity and absence of missing values.  
-- Correctness of rolling window sequence generation.  
-- Accuracy of RUL target calculations.  
-- Documentation of data preparation steps.  
+  - Data integrity check  
+  - Correct sequence generation  
+  - Accurate RUL targets  
+  - Documented data preparation  
 
-**Milestone 2: Model Development & Training**  
+---
 
-- **Objective:** Develop and train a time-series deep learning model (LSTM/GRU) capable of learning patterns from sensor data to predict RUL.  
+### Milestone 2: Model Development & Training  
+- **Objective:** Develop and train an LSTM/GRU deep learning model for RUL prediction.  
 - **Deliverables:**  
-- Implemented LSTM or GRU model architecture.  
-- Trained model weights.  
-- Training loss and validation loss curves.  
-- Code for model definition, training, and saving.  
+  - Model architecture implementation  
+  - Trained model weights  
+  - Loss curves (training & validation)  
+  - Code for model training and saving  
 - **Evaluation:**  
-- Convergence of training process (loss reduction).  
-- Initial performance on validation set (e.g., visual inspection of predicted vs. actual RUL).  
-- Proper implementation of the deep learning model.  
+  - Training convergence  
+  - Validation performance inspection  
+  - Model implementation correctness  
 
-**Milestone 3: Model Evaluation & Performance Assessment**  
+---
 
-- **Objective:** Rigorously evaluate the trained model's performance using defined metrics and analyze its predictive accuracy.  
+### Milestone 3: Model Evaluation & Performance Assessment  
+- **Objective:** Evaluate model accuracy and analyze predictive performance.  
 - **Deliverables:**  
-- Calculated RMSE scores for the test set.  
-- Plots comparing predicted RUL against actual RUL.  
-- Analysis of model biases and errors.  
-- Detailed evaluation report.  
+  - RMSE scores on test set  
+  - Plots of predicted vs actual RUL  
+  - Bias and error analysis  
+  - Detailed evaluation report  
 - **Evaluation:**  
-- Achieve an acceptable RMSE score (e.g., below a predefined threshold). 
-- Visual consistency between predicted and actual RUL plots.  
-- Identification and understanding of model limitations.  
+  - RMSE within acceptable range  
+  - Visual consistency of plots  
+  - Understanding model limits  
 
-**Milestone 4: Risk Thresholding & Alert System**  
+---
 
-- **Objective:** Define and implement a mechanism to translate RUL predictions into actionable maintenance alerts.  
+### Milestone 4: Risk Thresholding & Alert System  
+- **Objective:** Translate RUL predictions into actionable alerts for maintenance.  
 - **Deliverables:**  
-- Defined RUL thresholds for different alert levels (e.g., warning, critical). 
-- Logic for triggering maintenance alerts based on predicted RUL.  
-- Examples of triggered alerts.  
+  - Defined RUL alert thresholds (warning, critical)  
+  - Logic for triggering alerts  
+  - Sample alert instances  
 - **Evaluation:**  
-- Effectiveness of thresholds in identifying potential failures early.  
-- Clarity and accuracy of alert triggers.  
-- Practical applicability of the alerting mechanism.  
+  - Early failure detection effectiveness  
+  - Alert clarity and accuracy  
+  - Practical application of alerts  
 
-**Milestone 5: Visualization & Dashboard Development**  
+---
 
-- **Objective:** Create interactive visualizations and a dashboard to present RUL trends, predictions, and alerts.  
+### Milestone 5: Visualization & Dashboard Development  
+- **Objective:** Build interactive visuals and dashboards for RUL insights and alerts.  
 - **Deliverables:**  
-- Interactive charts displaying RUL trends over time. 
-- Dashboards showing current RUL predictions and alert zones. 
-- User-friendly interface (e.g., Streamlit/Flask application).  
+  - Interactive charts of RUL trends  
+  - Dashboard with prediction and alert zones  
+  - User-friendly interface (Streamlit/Flask)  
 - **Evaluation:**  
-- Clarity and informativeness of visualizations.  
-- Responsiveness and usability of the dashboard.  
-  - Ability to convey critical insights about asset health and potential risks. 
+  - Clarity and informativeness  
+  - Responsiveness and usability  
+  - Effective communication of asset health  
+
+---
+
+## 🚀 Quick Start: prognosAI Project
+
+Follow these simple steps to set up and test the project:
+
+---
+
+> ### 🛠️ **Clone the repository**  
+> ```
+> git clone git@github.com:prognosAI-Infosys-Intern-project/prognosAI-Intern-project.git
+> ```
+
+---
+
+> ### 📁 **Navigate to the project folder**  
+> ```
+> cd prognosAI-Intern-project/Project
+> ```
+
+---
+
+> ### ✨ **Run Data Preprocessing**  
+> Generate the required datasets:  
+> ```
+> python data_preprocessing.py
+> ```
+
+---
+
+> ### 🖥️ **Start the Streamlit App**  
+> Launch the web interface:  
+> ```
+> streamlit run app.py
+> ```
+
+---
+
+> ### 📤 **Test Model Output**  
+> Upload the `sequence` and `metadata` files from:  
+> ```
+> processed_data/test
+> ```  
+> View the results in the app.
+
+---
