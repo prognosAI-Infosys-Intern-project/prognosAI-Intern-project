@@ -2,43 +2,57 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Bidirectional, LSTM, Dense, Dropout, BatchNormalization, Layer
+from tensorflow.keras.layers import (
+    Input, Bidirectional, LSTM, Dense, Dropout,
+    LayerNormalization, Layer
+)
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 import os
 import joblib
 
-# Custom Attention Layer
-class Attention(Layer):
+# Custom Self-Attention Layer
+class SelfAttention(Layer):
     def __init__(self, **kwargs):
-        super(Attention, self).__init__(**kwargs)
+        super(SelfAttention, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        self.W = self.add_weight(
-            name='attention_weight',
-            shape=(input_shape[-1], 1),
-            initializer='random_normal',
+        d_model = input_shape[-1]
+        # Query, Key, Value weight matrices
+        self.Wq = self.add_weight(
+            name="Wq",
+            shape=(d_model, d_model),
+            initializer="glorot_uniform",
             trainable=True
         )
-        self.b = self.add_weight(
-            name='attention_bias',
-            shape=(input_shape[1], 1),
-            initializer='zeros',
+        self.Wk = self.add_weight(
+            name="Wk",
+            shape=(d_model, d_model),
+            initializer="glorot_uniform",
             trainable=True
         )
-        super(Attention, self).build(input_shape)
+        self.Wv = self.add_weight(
+            name="Wv",
+            shape=(d_model, d_model),
+            initializer="glorot_uniform",
+            trainable=True
+        )
+        super(SelfAttention, self).build(input_shape)
 
     def call(self, inputs):
-        e = tf.keras.backend.tanh(tf.keras.backend.dot(inputs, self.W) + self.b)
-        e = tf.keras.backend.squeeze(e, axis=-1)  # (batch_size, timesteps)
-        alpha = tf.keras.backend.softmax(e)       # attention weights
-        alpha_expanded = tf.keras.backend.expand_dims(alpha, axis=-1)  # (batch_size, timesteps, 1)
-        context = inputs * alpha_expanded
-        context = tf.keras.backend.sum(context, axis=1)  # context vector
-        return context
+        # inputs: (batch, timesteps, features)
+        Q = tf.matmul(inputs, self.Wq)
+        K = tf.matmul(inputs, self.Wk)
+        V = tf.matmul(inputs, self.Wv)
+        scores = tf.matmul(Q, K, transpose_b=True) / tf.math.sqrt(tf.cast(tf.shape(K)[-1], tf.float32))
+        weights = tf.nn.softmax(scores, axis=-1)
+        attended = tf.matmul(weights, V)
+        # Pool across time dimension
+        return tf.reduce_mean(attended, axis=1)
 
     def compute_output_shape(self, input_shape):
         return (input_shape[0], input_shape[2])
+
 
 def load_data_with_scaler(sequence_path, metadata_path, scaler_path, feature_cols_path):
     X = np.load(sequence_path)
@@ -55,72 +69,88 @@ def load_data_with_scaler(sequence_path, metadata_path, scaler_path, feature_col
         )
     return X, y, scaler, feature_cols
 
-def build_stacked_bidir_lstm_attention(input_shape,
-                                       lstm_units=[128, 64, 32],
-                                       dropout_rate=0.5,
-                                       l2_reg=2e-3,
-                                       learning_rate=1e-4):
+
+def build_attention_enhanced_lstm(input_shape,
+                                  lstm_units=[128, 64],
+                                  dropout_rate=0.3,
+                                  l2_reg=1e-4,
+                                  learning_rate=5e-4):
     inputs = Input(shape=input_shape)
     x = inputs
+
+    # Stacked Bidirectional LSTM layers
     for units in lstm_units:
         x = Bidirectional(
-            LSTM(units,
-                 return_sequences=True,
+            LSTM(units, return_sequences=True,
                  kernel_regularizer=tf.keras.regularizers.l2(l2_reg))
         )(x)
-        x = BatchNormalization()(x)
+        x = LayerNormalization()(x)
         x = Dropout(dropout_rate)(x)
 
-    context = Attention()(x)
+    # Self-Attention layer
+    attn_output = SelfAttention()(x)
 
-    outputs = Dense(1, activation='linear')(context)
+    # Dense layers on attention output
+    x = Dense(64, activation='relu')(attn_output)
+    x = Dropout(dropout_rate)(x)
+    outputs = Dense(1, activation='linear')(x)
 
     model = Model(inputs=inputs, outputs=outputs)
     optimizer = Adam(learning_rate=learning_rate, clipnorm=1.0)
     model.compile(optimizer=optimizer, loss='mse', metrics=['mae'])
     return model
 
+
 def main():
-    train_seq_path = os.path.join('processed_data', 'train', 'sequences.npy')
-    train_meta_path = os.path.join('processed_data', 'train', 'metadata.csv')
+    # Paths
+    seq_path = os.path.join('processed_data', 'train', 'sequences.npy')
+    meta_path = os.path.join('processed_data', 'train', 'metadata.csv')
     scaler_path = os.path.join('processed_data', 'train', 'scaler.pkl')
     feature_cols_path = os.path.join('processed_data', 'train', 'feature_columns.txt')
 
+    # Load data
     X_train, y_train, scaler, feature_cols = load_data_with_scaler(
-        train_seq_path, train_meta_path, scaler_path, feature_cols_path
+        seq_path, meta_path, scaler_path, feature_cols_path
     )
-
     input_shape = (X_train.shape[1], X_train.shape[2])
 
-    model = build_stacked_bidir_lstm_attention(
+    # Build model
+    model = build_attention_enhanced_lstm(
         input_shape=input_shape,
-        lstm_units=[128, 64, 32],
-        dropout_rate=0.5,
-        l2_reg=2e-3,
-        learning_rate=1e-4
+        lstm_units=[128, 64],
+        dropout_rate=0.3,
+        l2_reg=1e-4,
+        learning_rate=5e-4
     )
     model.summary()
 
+    # Callbacks
     callbacks = [
-        EarlyStopping(monitor='val_mae', patience=12, restore_best_weights=True, verbose=1),
-        ReduceLROnPlateau(monitor='val_mae', factor=0.2, patience=6, min_lr=1e-6, verbose=1),
-        ModelCheckpoint('model/best_model.keras', save_best_only=True, monitor='val_mae', verbose=1)
+        EarlyStopping(monitor='val_mae', patience=10,
+                      restore_best_weights=True, verbose=1),
+        ReduceLROnPlateau(monitor='val_mae', factor=0.3,
+                          patience=5, min_lr=1e-6, verbose=1),
+        ModelCheckpoint('model/attention_model.keras',
+                        save_best_only=True, monitor='val_mae', verbose=1)
     ]
 
     os.makedirs('model', exist_ok=True)
 
+    # Train
     history = model.fit(
         X_train, y_train,
         validation_split=0.2,
-        epochs=100,
+        epochs=50,
         batch_size=32,
         callbacks=callbacks,
         verbose=2
     )
 
-    final_model_path = os.path.join('model', 'final_model.keras')
+    # Save final model
+    final_model_path = os.path.join('model', 'attention_model_final.keras')
     model.save(final_model_path)
     print(f'Model saved at: {final_model_path}')
+
 
 if __name__ == '__main__':
     main()
