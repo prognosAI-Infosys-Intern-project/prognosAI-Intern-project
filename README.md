@@ -4,7 +4,7 @@ Project Objective
 
 To design and develop an AI-based predictive maintenance system capable of estimating the Remaining Useful Life (RUL) of industrial machinery using multivariate time-series sensor data. The system will be prototyped using the NASA CMAPSS dataset and structured to generalize across similar domains such as turbines, pumps, and motors. The objective is to enable timely maintenance decisions, minimize unplanned downtime, and optimize asset utilization by applying deep learning techniques like LSTM for sequential pattern recognition and failure prediction.  
 
-Project Workflow  
+Project Workflow  :
 
 1. **Data Ingestion**  
 - Load and preprocess the CMAPSS sensor dataset (cycle-wise engine data). 
