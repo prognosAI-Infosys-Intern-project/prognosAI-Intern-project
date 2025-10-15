@@ -26,14 +26,6 @@ Design and develop an AI-based predictive maintenance system to estimate the Rem
 6. **Visualization & Output**  
    - Present results through charts and dashboards showing RUL trends and alert zones.
 
----
-
-## 🏗️ Architecture Diagram
-
-![Architecture Diagram](path_to_your_diagram.png)  
-
----
-
 ## 🛠️ Tech Stack
 
 - **Python** – Core programming language  
@@ -121,43 +113,59 @@ Design and develop an AI-based predictive maintenance system to estimate the Rem
 
 Follow these simple steps to set up and test the project:
 
----
+1. **Clone the Repository**
+   - Open your terminal or command prompt.
+   - Run the command below to clone the project repository:
+     ```
+     git clone https://github.com/prognosAI-Infosys-Intern-project/prognosAI-Intern-project.git
+     ```
+   - Change directory to the project folder:
+     ```
+     cd prognosAI-Intern-project/Project
+     ```
 
-> ### 🛠️ **Clone the repository**  
-> ```
-> git clone git@github.com:prognosAI-Infosys-Intern-project/prognosAI-Intern-project.git
-> ```
+2. **Create and Activate Python Virtual Environment**
+   - Run the following command to create a virtual environment named `venv`:
+     ```
+     python -m venv venv
+     ```
+   - Activate the virtual environment:
+     - On Linux/macOS:
+       ```
+       source venv/bin/activate
+       ```
+     - On Windows:
+       ```
+       venv\Scripts\activate
+       ```
 
----
+3. **Install Required Dependencies**
+   - Install the required Python packages using:
+     ```
+     pip install -r requirements.txt
+     ```
 
-> ### 📁 **Navigate to the project folder**  
-> ```
-> cd prognosAI-Intern-project/Project
-> ```
+4. **Run Data Preprocessing**
+   - Prepare the datasets and feature sequences by running:
+     ```
+     python data_preprocessing.py
+     ```
 
----
+5. **Train the Model**
+   - Train the predictive maintenance model by executing:
+     ```
+     python train_model.py
+     ```
 
-> ### ✨ **Run Data Preprocessing**  
-> Generate the required datasets:  
-> ```
-> python data_preprocessing.py
-> ```
+6. **Start Streamlit Dashboard**
+   - Launch the interactive web dashboard for predictions and alerts:
+     ```
+     streamlit run app.py
+     ```
 
----
-
-> ### 🖥️ **Start the Streamlit App**  
-> Launch the web interface:  
-> ```
-> streamlit run app.py
-> ```
-
----
-
-> ### 📤 **Test Model Output**  
-> Upload the `sequence` and `metadata` files from:  
-> ```
-> processed_data/test
-> ```  
-> View the results in the app.
-
----
+7. **Upload Test Data**
+   - Use the Streamlit app interface to upload `sequence` and `metadata` files located in:
+     ```
+     processed_data/test
+     ```
+   - View model predictions and alert zones on the dashboard.
