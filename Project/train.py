@@ -1,94 +1,153 @@
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Bidirectional, LSTM, Dense, Dropout
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import (
+    Input, Bidirectional, LSTM, Dense, Dropout,
+    LayerNormalization, Layer
+)
+from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 import os
 import joblib
 
+# Custom Self-Attention Layer
+class SelfAttention(Layer):
+    def __init__(self, **kwargs):
+        super(SelfAttention, self).__init__(**kwargs)
 
-# Load preprocessed data and scaler for consistent feature usage
+    def build(self, input_shape):
+        d_model = input_shape[-1]
+        # Query, Key, Value weight matrices
+        self.Wq = self.add_weight(
+            name="Wq",
+            shape=(d_model, d_model),
+            initializer="glorot_uniform",
+            trainable=True
+        )
+        self.Wk = self.add_weight(
+            name="Wk",
+            shape=(d_model, d_model),
+            initializer="glorot_uniform",
+            trainable=True
+        )
+        self.Wv = self.add_weight(
+            name="Wv",
+            shape=(d_model, d_model),
+            initializer="glorot_uniform",
+            trainable=True
+        )
+        super(SelfAttention, self).build(input_shape)
+
+    def call(self, inputs):
+        # inputs: (batch, timesteps, features)
+        Q = tf.matmul(inputs, self.Wq)
+        K = tf.matmul(inputs, self.Wk)
+        V = tf.matmul(inputs, self.Wv)
+        scores = tf.matmul(Q, K, transpose_b=True) / tf.math.sqrt(tf.cast(tf.shape(K)[-1], tf.float32))
+        weights = tf.nn.softmax(scores, axis=-1)
+        attended = tf.matmul(weights, V)
+        # Pool across time dimension
+        return tf.reduce_mean(attended, axis=1)
+
+    def compute_output_shape(self, input_shape):
+        return (input_shape[0], input_shape[2])
+
+
 def load_data_with_scaler(sequence_path, metadata_path, scaler_path, feature_cols_path):
-    X = np.load(sequence_path)  # (num_samples, window_size, num_features)
+    X = np.load(sequence_path)
     meta = pd.read_csv(metadata_path)
     y = meta['RUL'].values.reshape(-1, 1)
 
-    # Load scaler and feature columns from training preprocessing
     scaler = joblib.load(scaler_path)
     with open(feature_cols_path, 'r') as f:
-        feature_cols = [line.strip() for line in f.readlines()]
+        feature_cols = [line.strip() for line in f]
 
-    # Confirm feature count matches X's last dimension
     if X.shape[2] != len(feature_cols):
-        raise ValueError(f"Feature dimension mismatch! Model expects {len(feature_cols)} features, but sequences have {X.shape[2]} features.")
-
+        raise ValueError(
+            f"Expected {len(feature_cols)} features, but got {X.shape[2]}"
+        )
     return X, y, scaler, feature_cols
 
 
-def build_model(input_shape, lstm_units=[100, 50], dropout_rate=0.3, l2_reg=1e-4):
-    from tensorflow.keras import regularizers
+def build_attention_enhanced_lstm(input_shape,
+                                  lstm_units=[128, 64],
+                                  dropout_rate=0.3,
+                                  l2_reg=1e-4,
+                                  learning_rate=5e-4):
+    inputs = Input(shape=input_shape)
+    x = inputs
 
-    model = Sequential()
-    for idx, units in enumerate(lstm_units):
-        return_sequences = (idx < len(lstm_units) - 1)
-        if idx == 0:
-            model.add(Bidirectional(
-                LSTM(units, return_sequences=return_sequences,
-                     kernel_regularizer=regularizers.l2(l2_reg)),
-                input_shape=input_shape))
-        else:
-            model.add(Bidirectional(
-                LSTM(units, return_sequences=return_sequences,
-                     kernel_regularizer=regularizers.l2(l2_reg))
-            ))
-        model.add(Dropout(dropout_rate))
-    model.add(Dense(1, activation='linear'))
+    # Stacked Bidirectional LSTM layers
+    for units in lstm_units:
+        x = Bidirectional(
+            LSTM(units, return_sequences=True,
+                 kernel_regularizer=tf.keras.regularizers.l2(l2_reg))
+        )(x)
+        x = LayerNormalization()(x)
+        x = Dropout(dropout_rate)(x)
 
-    model.compile(optimizer='adam', loss='mse', metrics=['mae'])
+    # Self-Attention layer
+    attn_output = SelfAttention()(x)
+
+    # Dense layers on attention output
+    x = Dense(64, activation='relu')(attn_output)
+    x = Dropout(dropout_rate)(x)
+    outputs = Dense(1, activation='linear')(x)
+
+    model = Model(inputs=inputs, outputs=outputs)
+    optimizer = Adam(learning_rate=learning_rate, clipnorm=1.0)
+    model.compile(optimizer=optimizer, loss='mse', metrics=['mae'])
     return model
 
 
 def main():
-    # Paths for preprocessed train data and preprocessing artifacts
-    train_seq_path = os.path.join('processed_data', 'train', 'sequences.npy')
-    train_meta_path = os.path.join('processed_data', 'train', 'metadata.csv')
+    # Paths
+    seq_path = os.path.join('processed_data', 'train', 'sequences.npy')
+    meta_path = os.path.join('processed_data', 'train', 'metadata.csv')
     scaler_path = os.path.join('processed_data', 'train', 'scaler.pkl')
     feature_cols_path = os.path.join('processed_data', 'train', 'feature_columns.txt')
 
+    # Load data
     X_train, y_train, scaler, feature_cols = load_data_with_scaler(
-        train_seq_path, train_meta_path, scaler_path, feature_cols_path
+        seq_path, meta_path, scaler_path, feature_cols_path
     )
-
-    print(f"Train sequences shape: {X_train.shape}")
-    print(f"Train labels shape: {y_train.shape}")
-
     input_shape = (X_train.shape[1], X_train.shape[2])
 
-    lstm_units = [100, 75, 50]
-    dropout_rate = 0.3
-    l2_reg = 1e-4
-    model = build_model(input_shape, lstm_units, dropout_rate, l2_reg)
-    print(model.summary())
+    # Build model
+    model = build_attention_enhanced_lstm(
+        input_shape=input_shape,
+        lstm_units=[128, 64],
+        dropout_rate=0.3,
+        l2_reg=1e-4,
+        learning_rate=5e-4
+    )
+    model.summary()
 
+    # Callbacks
     callbacks = [
-        EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True, verbose=1),
-        ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, verbose=1),
-        ModelCheckpoint('model/best_model.keras', save_best_only=True, monitor='val_loss', verbose=1)
+        EarlyStopping(monitor='val_mae', patience=10,
+                      restore_best_weights=True, verbose=1),
+        ReduceLROnPlateau(monitor='val_mae', factor=0.3,
+                          patience=5, min_lr=1e-6, verbose=1),
+        ModelCheckpoint('model/attention_model.keras',
+                        save_best_only=True, monitor='val_mae', verbose=1)
     ]
 
     os.makedirs('model', exist_ok=True)
 
+    # Train
     history = model.fit(
         X_train, y_train,
         validation_split=0.2,
         epochs=50,
-        batch_size=64,
+        batch_size=32,
         callbacks=callbacks,
         verbose=2
     )
 
-    final_model_path = os.path.join('model', 'final_model.keras')
+    # Save final model
+    final_model_path = os.path.join('model', 'attention_model_final.keras')
     model.save(final_model_path)
     print(f'Model saved at: {final_model_path}')
 
